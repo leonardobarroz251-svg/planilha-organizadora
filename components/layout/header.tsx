@@ -21,12 +21,19 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Props = {
   user: { name: string | null; email: string };
+  role?: "user" | "admin";
   hideAmounts: boolean;
   onToggleHideAmounts: () => void;
   onNewTransaction: () => void;
 };
 
-export function Header({ user, hideAmounts, onToggleHideAmounts, onNewTransaction }: Props) {
+export function Header({
+  user,
+  role = "user",
+  hideAmounts,
+  onToggleHideAmounts,
+  onNewTransaction,
+}: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -60,7 +67,7 @@ export function Header({ user, hideAmounts, onToggleHideAmounts, onNewTransactio
       className="sticky top-0 z-30 flex items-center gap-2 border-b border-[var(--line)] bg-[var(--bg)]/85 px-3 backdrop-blur-md sm:px-5"
       style={{ height: "var(--header-h)" }}
     >
-      <MobileSidebar />
+      <MobileSidebar role={role} />
 
       <nav aria-label="Breadcrumb" className="hidden items-center gap-2 text-[12.5px] text-[var(--muted)] sm:flex">
         <span>Workspace</span>

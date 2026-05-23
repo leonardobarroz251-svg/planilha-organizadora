@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { LoginForm } from "./login-form";
 import { BrandMark } from "@/components/shared/brand-mark";
 
@@ -65,10 +66,12 @@ export default function LoginPage() {
               Acesse seu <span className="font-serif-italic">Cofre</span>
             </h2>
             <p className="text-sm text-[var(--ink-2)]">
-              Enviamos um link mágico para o seu email — sem senhas para esquecer.
+              Enviamos um código de 6 dígitos para o seu email — sem senhas para esquecer.
             </p>
           </header>
-          <LoginForm />
+          <Suspense fallback={<div className="h-[260px]" />}>
+            <LoginForm />
+          </Suspense>
           <p className="text-center text-[11px] leading-relaxed text-[var(--muted)]">
             Ao continuar você concorda com os{" "}
             <a className="underline decoration-[var(--line-strong)] underline-offset-4" href="#">

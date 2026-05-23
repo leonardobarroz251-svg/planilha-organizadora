@@ -20,6 +20,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       .order("position", { ascending: true }),
   ]);
 
+  const role: "user" | "admin" = profile?.role === "admin" ? "admin" : "user";
+
   return (
     <div className="flex min-h-svh w-full">
       <Sidebar
@@ -27,6 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           name: profile?.full_name ?? null,
           email: profile?.email ?? user.email ?? "",
         }}
+        role={role}
       />
       <div className="min-w-0 flex-1">
         <AppShell
@@ -34,6 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             name: profile?.full_name ?? null,
             email: profile?.email ?? user.email ?? "",
           }}
+          role={role}
           initialHideAmounts={prefs?.hide_amounts ?? false}
           categories={categories ?? []}
         >

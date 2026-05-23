@@ -10,12 +10,19 @@ import type { Category } from "@/types/database";
 
 type Props = {
   user: { name: string | null; email: string };
+  role?: "user" | "admin";
   initialHideAmounts: boolean;
   categories: Category[];
   children: React.ReactNode;
 };
 
-export function AppShell({ user, initialHideAmounts, categories, children }: Props) {
+export function AppShell({
+  user,
+  role = "user",
+  initialHideAmounts,
+  categories,
+  children,
+}: Props) {
   const [hideAmounts, setHideAmounts] = useState(initialHideAmounts);
   const [newTxOpen, setNewTxOpen] = useState(false);
   const router = useRouter();
@@ -45,6 +52,7 @@ export function AppShell({ user, initialHideAmounts, categories, children }: Pro
       <div className="flex min-h-svh flex-col">
         <Header
           user={user}
+          role={role}
           hideAmounts={hideAmounts}
           onToggleHideAmounts={toggleHideAmounts}
           onNewTransaction={openNewTransaction}

@@ -1,16 +1,29 @@
 "use client";
 
+import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { navItems } from "@/lib/nav";
+import { type NavItem, navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
-export function SidebarNav({ onItemClick }: { onItemClick?: () => void }) {
+type Props = {
+  onItemClick?: () => void;
+  role?: "user" | "admin";
+};
+
+const adminItem: NavItem = {
+  href: "/admin/usuarios",
+  label: "Administração",
+  icon: ShieldCheck,
+};
+
+export function SidebarNav({ onItemClick, role = "user" }: Props) {
   const pathname = usePathname();
+  const items: NavItem[] = role === "admin" ? [...navItems, adminItem] : navItems;
   return (
     <nav className="flex flex-col gap-0.5 px-2">
-      {navItems.map((item) => {
+      {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         const disabled = item.comingSoon;
         const Icon = item.icon;

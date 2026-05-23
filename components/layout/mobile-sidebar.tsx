@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { SidebarNav } from "./sidebar-nav";
 
-export function MobileSidebar() {
+export function MobileSidebar({ role = "user" }: { role?: "user" | "admin" }) {
   const [open, setOpen] = useState(false);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -22,7 +22,7 @@ export function MobileSidebar() {
         <div className="px-5 pt-5 pb-4">
           <BrandMark size={26} withWordmark />
         </div>
-        <SidebarNav onItemClick={() => setOpen(false)} />
+        <SidebarNav role={role} onItemClick={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   );

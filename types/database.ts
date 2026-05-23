@@ -8,12 +8,15 @@ export type Theme = "light" | "dark" | "sepia";
 export type Accent = "sage" | "clay" | "cobalt" | "plum";
 export type Density = "compact" | "comfortable";
 
+export type UserRole = "user" | "admin";
+
 export type Profile = {
   id: string;
   email: string;
   full_name: string | null;
   city: string | null;
   avatar_url: string | null;
+  role: UserRole;
   created_at: string;
 };
 
