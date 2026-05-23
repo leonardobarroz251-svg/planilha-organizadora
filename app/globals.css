@@ -1,26 +1,289 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@custom-variant sepia (&:where([data-theme="sepia"], [data-theme="sepia"] *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-instrument-serif);
+
+  /* core neutrals (mapped to shadcn tokens) */
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--accent-ink);
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--accent-soft);
+  --color-accent-foreground: var(--accent-ink);
+  --color-destructive: var(--danger);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--accent);
+
+  /* chart colors */
+  --color-chart-1: var(--accent);
+  --color-chart-2: var(--info);
+  --color-chart-3: var(--warn);
+  --color-chart-4: var(--danger);
+  --color-chart-5: var(--muted);
+
+  /* sidebar */
+  --color-sidebar: var(--surface-2);
+  --color-sidebar-foreground: var(--ink);
+  --color-sidebar-primary: var(--accent);
+  --color-sidebar-primary-foreground: var(--accent-ink);
+  --color-sidebar-accent: var(--surface);
+  --color-sidebar-accent-foreground: var(--ink);
+  --color-sidebar-border: var(--line);
+  --color-sidebar-ring: var(--accent);
+
+  /* radius scale, anchored to --radius */
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.72);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* =========================================================
+   Cofre design tokens — OKLch warm light by default
+   ========================================================= */
+:root,
+[data-theme="light"] {
+  --bg: oklch(0.985 0.004 85);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.97 0.005 85);
+  --line: oklch(0.91 0.005 85);
+  --line-strong: oklch(0.82 0.006 85);
+  --ink: oklch(0.18 0.01 270);
+  --ink-2: oklch(0.32 0.01 270);
+  --muted: oklch(0.52 0.01 270);
+
+  --warn: oklch(0.62 0.14 60);
+  --warn-soft: oklch(0.94 0.05 60);
+  --danger: oklch(0.58 0.16 25);
+  --danger-soft: oklch(0.94 0.05 25);
+  --info: oklch(0.55 0.1 245);
+  --info-soft: oklch(0.94 0.04 245);
+
+  --shadow-1: 0 1px 2px oklch(0.18 0.01 270 / 0.05),
+    0 1px 1px oklch(0.18 0.01 270 / 0.03);
+  --shadow-2: 0 12px 32px -8px oklch(0.18 0.01 270 / 0.18),
+    0 4px 12px -4px oklch(0.18 0.01 270 / 0.1);
+
+  --radius: 0.875rem;          /* 14px */
+  --sidebar-w: 232px;
+  --header-h: 60px;
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: oklch(0.18 0.005 270);
+  --surface: oklch(0.21 0.006 270);
+  --surface-2: oklch(0.24 0.006 270);
+  --line: oklch(0.31 0.008 270);
+  --line-strong: oklch(0.4 0.01 270);
+  --ink: oklch(0.96 0.005 90);
+  --ink-2: oklch(0.82 0.008 90);
+  --muted: oklch(0.62 0.01 270);
+
+  --warn: oklch(0.78 0.14 65);
+  --warn-soft: oklch(0.32 0.06 65);
+  --danger: oklch(0.72 0.16 25);
+  --danger-soft: oklch(0.32 0.07 25);
+  --info: oklch(0.72 0.1 245);
+  --info-soft: oklch(0.32 0.05 245);
+
+  --shadow-1: 0 1px 2px oklch(0 0 0 / 0.4), 0 1px 1px oklch(0 0 0 / 0.25);
+  --shadow-2: 0 12px 32px -8px oklch(0 0 0 / 0.55),
+    0 4px 12px -4px oklch(0 0 0 / 0.35);
+
+  color-scheme: dark;
+}
+
+[data-theme="sepia"] {
+  --bg: oklch(0.94 0.025 75);
+  --surface: oklch(0.98 0.02 78);
+  --surface-2: oklch(0.92 0.03 75);
+  --line: oklch(0.85 0.035 75);
+  --line-strong: oklch(0.75 0.04 75);
+  --ink: oklch(0.26 0.02 60);
+  --ink-2: oklch(0.4 0.025 60);
+  --muted: oklch(0.55 0.02 60);
+
+  --warn: oklch(0.6 0.14 55);
+  --warn-soft: oklch(0.9 0.06 55);
+  --danger: oklch(0.55 0.16 25);
+  --danger-soft: oklch(0.9 0.06 25);
+  --info: oklch(0.52 0.1 240);
+  --info-soft: oklch(0.9 0.04 240);
+
+  --shadow-1: 0 1px 2px oklch(0.3 0.04 60 / 0.08);
+  --shadow-2: 0 12px 32px -8px oklch(0.3 0.04 60 / 0.2);
+
+  color-scheme: light;
+}
+
+/* =========================================================
+   Accent presets — applied via [data-accent]
+   ========================================================= */
+[data-accent="sage"],
+:root:not([data-accent]) {
+  --accent: oklch(0.58 0.12 150);
+  --accent-soft: oklch(0.93 0.04 150);
+  --accent-ink: oklch(0.99 0.005 150);
+}
+[data-accent="clay"] {
+  --accent: oklch(0.6 0.14 40);
+  --accent-soft: oklch(0.93 0.04 40);
+  --accent-ink: oklch(0.99 0.005 40);
+}
+[data-accent="cobalt"] {
+  --accent: oklch(0.55 0.14 245);
+  --accent-soft: oklch(0.93 0.04 245);
+  --accent-ink: oklch(0.99 0.005 245);
+}
+[data-accent="plum"] {
+  --accent: oklch(0.5 0.13 320);
+  --accent-soft: oklch(0.93 0.04 320);
+  --accent-ink: oklch(0.99 0.005 320);
+}
+
+[data-theme="dark"][data-accent="sage"],
+[data-theme="dark"]:not([data-accent]) {
+  --accent: oklch(0.78 0.14 150);
+  --accent-soft: oklch(0.34 0.06 150);
+  --accent-ink: oklch(0.15 0.01 150);
+}
+[data-theme="dark"][data-accent="clay"] {
+  --accent: oklch(0.78 0.14 40);
+  --accent-soft: oklch(0.34 0.06 40);
+  --accent-ink: oklch(0.15 0.01 40);
+}
+[data-theme="dark"][data-accent="cobalt"] {
+  --accent: oklch(0.74 0.13 245);
+  --accent-soft: oklch(0.32 0.07 245);
+  --accent-ink: oklch(0.15 0.01 245);
+}
+[data-theme="dark"][data-accent="plum"] {
+  --accent: oklch(0.7 0.13 320);
+  --accent-soft: oklch(0.32 0.07 320);
+  --accent-ink: oklch(0.15 0.01 320);
+}
+
+/* =========================================================
+   Density — applied via [data-density]
+   ========================================================= */
+[data-density="compact"] {
+  --row-h: 36px;
+  --pad-y: 0.5rem;
+}
+[data-density="comfortable"],
+:root:not([data-density]) {
+  --row-h: 44px;
+  --pad-y: 0.75rem;
+}
+
+/* =========================================================
+   Base
+   ========================================================= */
+@layer base {
+  * {
+    @apply border-border;
+    border-color: var(--line);
+  }
+  html {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "ss01", "cv11", "tnum";
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+  }
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+  }
+  /* Custom scrollbars — subtle, premium feel */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--line-strong);
+    background-clip: content-box;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* =========================================================
+   Utility helpers
+   ========================================================= */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+@utility font-serif-italic {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  letter-spacing: -0.015em;
+}
+@utility shadow-card {
+  box-shadow: var(--shadow-1);
+}
+@utility shadow-pop {
+  box-shadow: var(--shadow-2);
+}
+
+/* =========================================================
+   Keyframes
+   ========================================================= */
+@keyframes cofre-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes cofre-view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: cofre-fade-in 0.32s cubic-bezier(0.2, 0.65, 0.3, 1) both;
+}
+.animate-view-enter {
+  animation: cofre-view-enter 0.42s cubic-bezier(0.2, 0.65, 0.3, 1) both;
 }
