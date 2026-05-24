@@ -302,7 +302,8 @@ create policy "insights self crud" on public.insights
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- =========================================================
--- Trigger: ao criar usuário no auth, criar profile + preferences + seeds
+-- Trigger: ao criar usuário no auth, cria profile + preferences + conta + 8 categorias.
+-- Le role de raw_user_meta_data.role (passado pelo admin no convite).
 -- =========================================================
 create or replace function public.handle_new_user()
 returns trigger
@@ -311,62 +312,40 @@ security definer
 set search_path = public
 as $$
 declare
-  v_account_id uuid;
-  v_cat_renda uuid;
-  v_cat_moradia uuid;
-  v_cat_dia uuid;
-  v_cat_transporte uuid;
+  v_role text;
 begin
-  -- profile
-  insert into public.profiles (id, email, full_name)
-  values (new.id, coalesce(new.email,''), coalesce(new.raw_user_meta_data->>'full_name', split_part(coalesce(new.email,''),'@',1)))
+  v_role := coalesce(new.raw_user_meta_data->>'role', 'user');
+  if v_role not in ('user', 'admin') then
+    v_role := 'user';
+  end if;
+
+  insert into public.profiles (id, email, full_name, role)
+  values (
+    new.id,
+    coalesce(new.email,''),
+    coalesce(new.raw_user_meta_data->>'full_name', split_part(coalesce(new.email,''),'@',1)),
+    v_role
+  )
   on conflict (id) do nothing;
 
-  -- preferences
-  insert into public.user_preferences (user_id) values (new.id) on conflict (user_id) do nothing;
+  insert into public.user_preferences (user_id)
+  values (new.id)
+  on conflict (user_id) do nothing;
 
-  -- conta padrão
   insert into public.accounts (user_id, name, provider, sync_status, balance)
   values (new.id, 'Conta principal', 'manual', 'manual', 0)
-  returning id into v_account_id;
+  on conflict do nothing;
 
-  -- categorias padrão
   insert into public.categories (user_id, slug, name, icon, color, kind, position) values
-    (new.id, 'moradia',     'Moradia',         'home',     'oklch(0.7 0.08 145)', 'expense', 0)  returning id into v_cat_moradia;
-  insert into public.categories (user_id, slug, name, icon, color, kind, position) values
-    (new.id, 'transporte',  'Transporte',      'car',      'oklch(0.7 0.09 245)', 'expense', 1)  returning id into v_cat_transporte;
-  insert into public.categories (user_id, slug, name, icon, color, kind, position) values
-    (new.id, 'dia-a-dia',   'Dia a dia',       'coffee',   'oklch(0.72 0.09 70)', 'expense', 2)  returning id into v_cat_dia;
-  insert into public.categories (user_id, slug, name, icon, color, kind, position) values
-    (new.id, 'saude',       'Saúde',           'heart',    'oklch(0.68 0.12 25)', 'expense', 3);
-  insert into public.categories (user_id, slug, name, icon, color, kind, position) values
-    (new.id, 'lazer',       'Lazer',           'sparkles', 'oklch(0.7 0.13 320)', 'expense', 4);
-  insert into public.categories (user_id, slug, name, icon, color, kind, position) values
-    (new.id, 'obrigacoes',  'Obrigações',      'receipt',  'oklch(0.6 0.05 270)', 'expense', 5);
-  insert into public.categories (user_id, slug, name, icon, color, kind, position) values
-    (new.id, 'carro-uber',  'Carro Uber/99',   'briefcase','oklch(0.66 0.1 50)',  'expense', 6);
-  insert into public.categories (user_id, slug, name, icon, color, kind, position) values
-    (new.id, 'renda',       'Renda',           'wallet',   'oklch(0.62 0.13 150)','income',  7) returning id into v_cat_renda;
-
-  -- transações de exemplo (últimos 30 dias)
-  insert into public.transactions (user_id, account_id, category_id, merchant, amount, occurred_at, is_recurring) values
-    (new.id, v_account_id, v_cat_renda,      'Uber',                    1840.00, current_date - interval '1 day',  false),
-    (new.id, v_account_id, v_cat_renda,      '99',                       720.00, current_date - interval '2 days', false),
-    (new.id, v_account_id, v_cat_renda,      'Uber',                    1620.00, current_date - interval '5 days', false),
-    (new.id, v_account_id, v_cat_transporte, 'Posto Shell — gasolina',  -240.00, current_date - interval '3 days', false),
-    (new.id, v_account_id, v_cat_transporte, 'Pedágio CCR',              -18.50, current_date - interval '4 days', false),
-    (new.id, v_account_id, v_cat_moradia,    'Aluguel',                -1900.00, current_date - interval '8 days', true),
-    (new.id, v_account_id, v_cat_moradia,    'Conta de luz',            -184.20, current_date - interval '6 days', true),
-    (new.id, v_account_id, v_cat_moradia,    'Internet Vivo Fibra',     -119.90, current_date - interval '10 days', true),
-    (new.id, v_account_id, v_cat_dia,        'Mercado Pão de Açúcar',   -322.40, current_date - interval '7 days',  false),
-    (new.id, v_account_id, v_cat_dia,        'Padaria do bairro',        -28.60, current_date - interval '2 days', false),
-    (new.id, v_account_id, v_cat_dia,        'iFood — Burger King',      -48.00, current_date - interval '9 days', false);
-
-  -- orçamentos do mês corrente
-  insert into public.budgets (user_id, category_id, month, planned_amount) values
-    (new.id, v_cat_moradia,    date_trunc('month', current_date)::date, 2400.00),
-    (new.id, v_cat_transporte, date_trunc('month', current_date)::date,  900.00),
-    (new.id, v_cat_dia,        date_trunc('month', current_date)::date, 1200.00);
+    (new.id, 'moradia',     'Moradia',         'home',     'oklch(0.7 0.08 145)', 'expense', 0),
+    (new.id, 'transporte',  'Transporte',      'car',      'oklch(0.7 0.09 245)', 'expense', 1),
+    (new.id, 'dia-a-dia',   'Dia a dia',       'coffee',   'oklch(0.72 0.09 70)', 'expense', 2),
+    (new.id, 'saude',       'Saúde',           'heart',    'oklch(0.68 0.12 25)', 'expense', 3),
+    (new.id, 'lazer',       'Lazer',           'sparkles', 'oklch(0.7 0.13 320)', 'expense', 4),
+    (new.id, 'obrigacoes',  'Obrigações',      'receipt',  'oklch(0.6 0.05 270)', 'expense', 5),
+    (new.id, 'carro-uber',  'Carro Uber/99',   'briefcase','oklch(0.66 0.1 50)',  'expense', 6),
+    (new.id, 'renda',       'Renda',           'wallet',   'oklch(0.62 0.13 150)','income',  7)
+  on conflict (user_id, slug) do nothing;
 
   return new;
 end;

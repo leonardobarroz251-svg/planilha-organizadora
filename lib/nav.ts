@@ -20,9 +20,9 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, shortcut: "D" },
   { href: "/transacoes", label: "Transações", icon: ArrowLeftRight, shortcut: "T" },
-  { href: "/objetivos", label: "Objetivos", icon: Target, shortcut: "O", comingSoon: true },
-  { href: "/planejamento", label: "Planejamento", icon: Compass, shortcut: "P", comingSoon: true },
-  { href: "/viagens", label: "Viagens", icon: Plane, shortcut: "V", comingSoon: true },
+  { href: "/objetivos", label: "Objetivos", icon: Target, shortcut: "O" },
+  { href: "/planejamento", label: "Planejamento", icon: Compass, shortcut: "P" },
+  { href: "/viagens", label: "Viagens", icon: Plane, shortcut: "V" },
   { href: "/insights", label: "Insights", icon: Sparkles, shortcut: "I", comingSoon: true },
   { href: "/configuracoes", label: "Configurações", icon: Settings, shortcut: "," },
 ];

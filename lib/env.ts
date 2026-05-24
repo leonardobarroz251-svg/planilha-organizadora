@@ -24,4 +24,7 @@ export const env = {
   get NEXT_PUBLIC_SITE_URL() {
     return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   },
+  get SUPABASE_SERVICE_ROLE_KEY() {
+    return read("SUPABASE_SERVICE_ROLE_KEY");
+  },
 };

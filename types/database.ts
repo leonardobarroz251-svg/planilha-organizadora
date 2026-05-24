@@ -117,6 +117,17 @@ export type Trip = {
   created_at: string;
 };
 
+export type TripItem = {
+  id: string;
+  trip_id: string;
+  kind: string;
+  description: string;
+  planned_amount: number;
+  actual_amount: number | null;
+  status: "planned" | "reserved" | "purchased";
+  occurred_at: string | null;
+};
+
 export type Insight = {
   id: string;
   user_id: string;
@@ -149,6 +160,7 @@ export type Database = {
       budgets: TableDef<Budget, { user_id: string; category_id: string; month: string; planned_amount: number }>;
       goals: TableDef<Goal, { user_id: string; name: string; target_amount: number }>;
       trips: TableDef<Trip, { user_id: string; name: string }>;
+      trip_items: TableDef<TripItem, { trip_id: string; kind: string; description: string }>;
       insights: TableDef<Insight, { user_id: string; kind: "win" | "alert" | "idea"; title: string }>;
     };
     Views: Record<string, never>;

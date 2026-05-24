@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { InviteForm } from "./invite-form";
 import { type AdminUserRow, UsersTable } from "./users-table";
 
 export const metadata: Metadata = { title: "Administração · Usuários" };
@@ -34,6 +35,8 @@ export default async function AdminUsuariosPage() {
           {adminCount === 1 ? "admin" : "admins"}
         </p>
       </header>
+
+      <InviteForm />
 
       {error ? (
         <div className="rounded-[var(--radius)] border border-[var(--danger)]/30 bg-[var(--danger)]/5 px-4 py-3 text-sm text-[var(--danger)]">
