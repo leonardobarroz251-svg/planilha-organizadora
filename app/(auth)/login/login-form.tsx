@@ -1,8 +1,8 @@
 "use client";
 
 import { ArrowRight, Loader2, Mail, MailCheck } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -10,51 +10,128 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const schema = z.object({
-  email: z.email("Digite um e-mail válido").trim(),
-});
+const emailSchema = z.email("Digite um e-mail válido").trim();
+const codeSchema = z
+  .string()
+  .regex(/^\d{6}$/, "Digite os 6 dígitos do código");
+
+type Step = "email" | "code";
+type Status = "idle" | "sending" | "verifying";
+
+const RESEND_COOLDOWN_SEC = 30;
 
 export function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTarget = searchParams.get("redirect") ?? "/dashboard";
 
+  const [step, setStep] = useState<Step>("email");
+  const [status, setStatus] = useState<Status>("idle");
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const codeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const errParam = searchParams.get("error");
     if (errParam) toast.error(errParam);
   }, [searchParams]);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
+
+  useEffect(() => {
+    if (step === "code") codeInputRef.current?.focus();
+  }, [step]);
+
+  async function sendCode(target: string) {
+    const supabase = createSupabaseBrowserClient();
+    const { error: sbError } = await supabase.auth.signInWithOtp({
+      email: target,
+      options: { shouldCreateUser: true },
+    });
+    if (sbError) throw sbError;
+  }
+
+  async function onSubmitEmail(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const parsed = schema.safeParse({ email });
+    const parsed = emailSchema.safeParse(email);
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "E-mail inválido");
       return;
     }
     setError(null);
-    setSubmitting(true);
+    setStatus("sending");
     try {
-      const supabase = createSupabaseBrowserClient();
-      const redirectUrl = new URL("/auth/callback", window.location.origin);
-      redirectUrl.searchParams.set("redirect", redirectTarget);
-      const { error: err } = await supabase.auth.signInWithOtp({
-        email: parsed.data.email,
-        options: { emailRedirectTo: redirectUrl.toString() },
-      });
-      if (err) throw err;
-      setSent(true);
+      await sendCode(parsed.data);
+      setStep("code");
+      setCooldown(RESEND_COOLDOWN_SEC);
     } catch (err) {
-      console.error("[login] signInWithOtp", err);
+      console.error("[login] sendCode", err);
       const message =
-        err instanceof Error ? err.message : "Não foi possível enviar o link";
+        err instanceof Error ? err.message : "Falha ao enviar o código";
       toast.error(message);
     } finally {
-      setSubmitting(false);
+      setStatus("idle");
     }
+  }
+
+  async function onSubmitCode(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const parsed = codeSchema.safeParse(code);
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Código inválido");
+      return;
+    }
+    setError(null);
+    setStatus("verifying");
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error: sbError } = await supabase.auth.verifyOtp({
+        email,
+        token: parsed.data,
+        type: "email",
+      });
+      if (sbError) throw sbError;
+      router.refresh();
+      router.replace(redirectTarget);
+    } catch (err) {
+      console.error("[login] verifyOtp", err);
+      const message =
+        err instanceof Error ? err.message : "Código inválido ou expirado";
+      toast.error(message);
+      setCode("");
+      setStatus("idle");
+      codeInputRef.current?.focus();
+    }
+  }
+
+  async function onResend() {
+    if (cooldown > 0 || status !== "idle") return;
+    setStatus("sending");
+    try {
+      await sendCode(email);
+      setCooldown(RESEND_COOLDOWN_SEC);
+      toast.success("Enviamos um novo código");
+    } catch (err) {
+      console.error("[login] resend", err);
+      const message =
+        err instanceof Error ? err.message : "Falha ao reenviar";
+      toast.error(message);
+    } finally {
+      setStatus("idle");
+    }
+  }
+
+  function onChangeEmail() {
+    setStep("email");
+    setCode("");
+    setError(null);
+    setCooldown(0);
   }
 
   function handleSocial(provider: "google" | "apple") {
@@ -63,41 +140,97 @@ export function LoginForm() {
     });
   }
 
-  if (sent) {
+  if (step === "code") {
     return (
-      <div className="space-y-5">
+      <div className="space-y-6">
         <div className="flex items-start gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)]/60 p-4">
           <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]">
             <MailCheck size={18} strokeWidth={2} />
           </span>
           <div className="space-y-1">
             <p className="text-[14px] text-foreground">
-              Link enviado para{" "}
+              Código enviado para{" "}
               <span className="font-medium">{email}</span>.
             </p>
             <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">
-              Abra a caixa de entrada e clique pra entrar — o link expira em 10
-              minutos.
+              Digite os 6 dígitos abaixo — o código expira em 10 minutos.
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setSent(false);
-            setEmail("");
-          }}
-          className="w-full text-center text-[12.5px] text-[var(--muted)] underline decoration-[var(--line-strong)] underline-offset-4 transition-colors hover:text-[var(--ink-2)]"
-        >
-          Usar outro e-mail
-        </button>
+
+        <form onSubmit={onSubmitCode} className="space-y-3">
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="code"
+              className="text-[12px] text-[var(--ink-2)]"
+            >
+              Código de verificação
+            </Label>
+            <Input
+              ref={codeInputRef}
+              id="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="\d{6}"
+              maxLength={6}
+              placeholder="••••••"
+              value={code}
+              onChange={(e) => {
+                const next = e.target.value.replace(/\D/g, "").slice(0, 6);
+                setCode(next);
+                if (error) setError(null);
+              }}
+              aria-invalid={!!error}
+              className="h-12 rounded-xl border-[var(--line)] bg-[var(--surface)]/40 text-center text-xl font-medium tracking-[0.6em] tabular placeholder:text-[var(--muted)]/60"
+            />
+            {error ? (
+              <p className="text-[12px] text-[var(--danger)]">{error}</p>
+            ) : null}
+          </div>
+
+          <Button
+            type="submit"
+            disabled={status === "verifying" || code.length !== 6}
+            className="h-11 w-full gap-2 rounded-xl bg-foreground px-4 text-[14px] font-medium text-background hover:bg-foreground/90"
+          >
+            {status === "verifying" ? (
+              <>
+                <Loader2 className="animate-spin" size={16} />
+                Verificando…
+              </>
+            ) : (
+              <>
+                Entrar
+                <ArrowRight size={16} strokeWidth={2.2} />
+              </>
+            )}
+          </Button>
+        </form>
+
+        <div className="flex items-center justify-between text-[12.5px] text-[var(--muted)]">
+          <button
+            type="button"
+            onClick={onChangeEmail}
+            className="underline decoration-[var(--line-strong)] underline-offset-4 transition-colors hover:text-[var(--ink-2)]"
+          >
+            Usar outro e-mail
+          </button>
+          <button
+            type="button"
+            onClick={onResend}
+            disabled={cooldown > 0 || status !== "idle"}
+            className="underline decoration-[var(--line-strong)] underline-offset-4 transition-colors hover:text-[var(--ink-2)] disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+          >
+            {cooldown > 0 ? `Reenviar em ${cooldown}s` : "Reenviar código"}
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="space-y-3">
+      <form onSubmit={onSubmitEmail} className="space-y-3">
         <div className="space-y-1.5">
           <Label
             htmlFor="email"
@@ -133,13 +266,13 @@ export function LoginForm() {
 
         <Button
           type="submit"
-          disabled={submitting}
+          disabled={status === "sending"}
           className="h-11 w-full gap-2 rounded-xl bg-foreground px-4 text-[14px] font-medium text-background hover:bg-foreground/90"
         >
-          {submitting ? (
+          {status === "sending" ? (
             <>
               <Loader2 className="animate-spin" size={16} />
-              Enviando link…
+              Enviando código…
             </>
           ) : (
             <>

@@ -151,8 +151,8 @@ export default function LoginPage() {
                 <span className="text-foreground/80">.</span>
               </h2>
               <p className="text-[14px] leading-relaxed text-[var(--ink-2)]">
-                Vamos enviar um link mágico para o seu e-mail. Sem senhas, sem
-                fricção.
+                Enviamos um código de 6 dígitos para o seu e-mail. Sem senhas,
+                sem fricção.
               </p>
             </header>
 
