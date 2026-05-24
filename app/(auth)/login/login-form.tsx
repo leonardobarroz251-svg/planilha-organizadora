@@ -11,9 +11,10 @@ import { Label } from "@/components/ui/label";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const emailSchema = z.email("Digite um e-mail válido").trim();
+const OTP_LENGTH = 8;
 const codeSchema = z
   .string()
-  .regex(/^\d{6}$/, "Digite os 6 dígitos do código");
+  .regex(new RegExp(`^\\d{${OTP_LENGTH}}$`), `Digite os ${OTP_LENGTH} dígitos do código`);
 
 type Step = "email" | "code";
 type Status = "idle" | "sending" | "verifying";
@@ -153,7 +154,7 @@ export function LoginForm() {
               <span className="font-medium">{email}</span>.
             </p>
             <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">
-              Digite os 6 dígitos abaixo — o código expira em 10 minutos.
+              Digite os {OTP_LENGTH} dígitos abaixo — o código expira em 10 minutos.
             </p>
           </div>
         </div>
@@ -171,17 +172,17 @@ export function LoginForm() {
               id="code"
               inputMode="numeric"
               autoComplete="one-time-code"
-              pattern="\d{6}"
-              maxLength={6}
-              placeholder="••••••"
+              pattern={`\\d{${OTP_LENGTH}}`}
+              maxLength={OTP_LENGTH}
+              placeholder={"•".repeat(OTP_LENGTH)}
               value={code}
               onChange={(e) => {
-                const next = e.target.value.replace(/\D/g, "").slice(0, 6);
+                const next = e.target.value.replace(/\D/g, "").slice(0, OTP_LENGTH);
                 setCode(next);
                 if (error) setError(null);
               }}
               aria-invalid={!!error}
-              className="h-12 rounded-xl border-[var(--line)] bg-[var(--surface)]/40 text-center text-xl font-medium tracking-[0.6em] tabular placeholder:text-[var(--muted)]/60"
+              className="h-12 rounded-xl border-[var(--line)] bg-[var(--surface)]/40 text-center text-xl font-medium tracking-[0.5em] tabular placeholder:text-[var(--muted)]/60"
             />
             {error ? (
               <p className="text-[12px] text-[var(--danger)]">{error}</p>
@@ -190,7 +191,7 @@ export function LoginForm() {
 
           <Button
             type="submit"
-            disabled={status === "verifying" || code.length !== 6}
+            disabled={status === "verifying" || code.length !== OTP_LENGTH}
             className="h-11 w-full gap-2 rounded-xl bg-foreground px-4 text-[14px] font-medium text-background hover:bg-foreground/90"
           >
             {status === "verifying" ? (
