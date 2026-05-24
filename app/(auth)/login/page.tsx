@@ -66,7 +66,7 @@ export default function LoginPage() {
               Acesse seu <span className="font-serif-italic">Cofre</span>
             </h2>
             <p className="text-sm text-[var(--ink-2)]">
-              Enviamos um código de 6 dígitos para o seu email — sem senhas para esquecer.
+              Acesse com seu email e senha.
             </p>
           </header>
           <Suspense fallback={<div className="h-[260px]" />}>
